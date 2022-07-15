@@ -9,7 +9,7 @@ from geopy.distance import distance as geopy_distance
 
 from ..location import EARTH
 from ..resolver import AbstractResolver, register
-
+import math
 
 @register('geocode')
 class GeocodeResolver(AbstractResolver):
@@ -48,11 +48,18 @@ class GeocodeResolver(AbstractResolver):
         # "tweet.get('coordinates', {})" would return None in the latter
         # case, with None.get() in turn causing an AttributeError. (None
         # or {}), on the other hand, is {}, and {}.get() is okay.
-        tweet_coordinates = (tweet.get('coordinates') or {}).get('coordinates')
+        tweet_coordinates = (tweet.get('geo.coordinates.coordinates') or {})
         if not tweet_coordinates:
             return None
-        tweet_coordinates = Point(longitude=tweet_coordinates[0],
-                                  latitude=tweet_coordinates[1])
+        if isinstance(tweet_coordinates, float) and math.isnan(tweet_coordinates):
+            return None
+        # print (tweet_coordinates)
+        # print (type(tweet_coordinates))
+        tweet_coordinates = tweet_coordinates.strip('[')
+        tweet_coordinates = tweet_coordinates.strip(']')
+        # print (tweet_coordinates.split(', ')[0])
+        tweet_coordinates = Point(longitude=tweet_coordinates.split(', ')[0],
+                                  latitude=tweet_coordinates.split(', ')[1])
         closest_candidate = None
         closest_distance = float('inf')
         for cell in self._cells_for(tweet_coordinates.latitude,

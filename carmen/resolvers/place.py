@@ -9,7 +9,7 @@ import warnings
 from ..location import Location, EARTH
 from ..names import ALTERNATIVE_COUNTRY_NAMES, US_STATE_ABBREVIATIONS
 from ..resolver import AbstractResolver, register
-
+import math
 
 STATE_RE = re.compile(r'.+,\s*(\w+)')
 
@@ -41,20 +41,31 @@ class PlaceResolver(AbstractResolver):
         self._locations_by_name[location.canonical()] = location
 
     def resolve_tweet(self, tweet):
-        place = tweet.get('place', None)
+        place = tweet.get('geo.place_id', None)
         if not place:
             return
-        country = place.get('country', None)
+        country = tweet.get('geo.country', None)
+         # place.get('country', None)
         if not country:
             warnings.warn('Tweet has Place with no country')
             return None
-        country = ALTERNATIVE_COUNTRY_NAMES.get(country.lower(), country)
+        if  isinstance(country, str) and country != 'nan':
+        # and not math.isnan(country):
+            country = ALTERNATIVE_COUNTRY_NAMES.get(country.lower(), country)
 
         name = {'country': country}
 
-        place_type = place['place_type'].lower()
+        place_type = tweet.get('geo.place_type', None)
+
+        if isinstance(place_type, str) and place_type != 'nan':
+         # and not math.isnan(place_type):
+            place_type = place_type.lower()
+        # geo.place_type
+         # place['place_type'].lower()
         if place_type in ('neighborhood', 'poi'):
-            full_name = place['full_name']
+            full_name = tweet.get('geo.full_name', None)
+            # 'geo.full_name'
+            # place['full_name']
             if full_name:
                 split_full_name = full_name.split(',')
                 if len(split_full_name) > 1:
@@ -63,9 +74,9 @@ class PlaceResolver(AbstractResolver):
                 warnings.warn('Tweet has Place with no neighborhood or '
                               'point of interest full name')
         elif place_type == 'city':
-            name['city'] = place['name']
-            if country.lower() == 'united states':
-                full_name = place['full_name']
+            name['city'] = tweet.get('geo.name', None)
+            if isinstance(country, str) and country != 'nan' and country.lower() == 'united states':
+                full_name = tweet.get('geo.full_name', None)
                 if full_name:
                     # Attempt to extract a state name from the full_name.
                     match = STATE_RE.search(full_name)
@@ -75,7 +86,8 @@ class PlaceResolver(AbstractResolver):
                 else:
                     warnings.warn('Tweet has Place with no city full name')
         elif place_type == 'admin':
-            name['state'] = place['name']
+            name['state'] = tweet.get('geo.name', None)
+             # place['name']
         elif place_type == 'country':
             pass
         else:
@@ -87,7 +99,9 @@ class PlaceResolver(AbstractResolver):
             return (False, location)
         location = Location(
             id=next(self._unknown_ids),
-            twitter_url=place['url'], twitter_id=place['id'],
+
+            # twitter_url=place['url'],
+             twitter_id=tweet.get('geo.place_id', None),
             **name)
         if self.allow_unknown_locations:
             # Remember this location for future lookups.

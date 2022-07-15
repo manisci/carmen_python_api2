@@ -7,6 +7,7 @@ import warnings
 from ..names import *
 from ..resolver import AbstractResolver, register
 
+import math
 
 STATE_RE = re.compile(r'.+,\s*(\w+)')
 NORMALIZATION_RE = re.compile(r'\s+|\W')
@@ -39,7 +40,8 @@ class ProfileResolver(AbstractResolver):
             if alias in aliases_already_added:
                 continue
             if alias in self.location_name_to_location:
-                warnings.warn('Duplicate location name "%s"' % alias)
+                pass
+                # warnings.warn('Duplicate location name "%s"' % alias)
             else:
                 self.location_name_to_location[alias] = location
             # Additionally add a normalized version of the alias
@@ -52,11 +54,13 @@ class ProfileResolver(AbstractResolver):
 
     def resolve_tweet(self, tweet):
         import sys
-        location_string = tweet.get('user', {}).get('location', '')
-            
+        location_string = tweet.get('author.location', '')
+        if location_string == 'nan':
+            return None
         if not location_string:
             return None
-
+        if isinstance(location_string, float) and math.isnan(location_string):
+            return None
         normalized = normalize(location_string)
 
         if normalized in self.location_name_to_location:

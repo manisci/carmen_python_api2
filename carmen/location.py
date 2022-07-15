@@ -4,7 +4,7 @@ locations."""
 
 import itertools
 import json
-
+import math
 
 class Location(object):
     """Contains information about a location and how it was identified.
@@ -55,9 +55,11 @@ class Location(object):
         for k, v in iterator:
             if hasattr(self, k):
                 setattr(self, k, v)
-
-        self.id = int(self.id)
-        self.parent_id = int(self.parent_id)
+        # print (self.id)
+        if isinstance(self.id, str) and len(self.id) != 0:      
+            self.id = int(self.id)
+        if isinstance(self.parent_id, str) and  len(self.parent_id)!= 0:
+            self.parent_id = int(self.parent_id)
         self.latitude = float(self.latitude)
         self.longitude = float(self.longitude)
 
@@ -82,7 +84,9 @@ class Location(object):
         try:
             return tuple(map(lambda x: x.lower(), self.name()))
         except:
-            return tuple([x.lower() for x in self.name()])
+            # print ("look at me")
+            # print (self.name())
+            return tuple([x.lower( ) if not(isinstance(x, float) and math.isnan(x)) else None for x in self.name()])
 
     def name(self):
         """Return a tuple containing this location's country, state,
@@ -122,6 +126,7 @@ class LocationEncoder(json.JSONEncoder):
             to_encode = {}
             for k in ('country', 'state', 'county', 'city', 'id',
                       'latitude', 'longitude', 'resolution_method'):
+                      # 'author.location','geo.coordinates.coordinates', 'geo.coordinates.type', 'geo.country', 'geo.country_code', 'geo.full_name', 'geo.geo.bbox', 'geo.geo.type', 'geo.id', 'geo.name', 'geo.place_id', 'geo.place_type'):
                 # We don't use hasattr here because we're checking for
                 # None values; the attributes themselves always exist.
                 v = getattr(obj, k)
