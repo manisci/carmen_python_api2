@@ -26,15 +26,16 @@ class GeocodeResolver(AbstractResolver):
     def _cells_for(self, latitude, longitude):
         """Return a list of cells containing the location at *latitude*
         and *longitude*."""
-        latitude = latitude * self.cell_size
-        longitude = longitude * self.cell_size
-        shift_size = self.cell_size / 2
-        for latitude_cell in (latitude - shift_size,
-                              latitude, latitude + shift_size):
-            for longitude_cell in (longitude - shift_size,
-                                   longitude, longitude + shift_size):
-                yield (int(latitude_cell / self.cell_size),
-                       int(longitude_cell / self.cell_size))
+        if isinstance(latitude, float) and isinstance(longitude, float):
+            latitude = latitude * self.cell_size
+            longitude = longitude * self.cell_size
+            shift_size = self.cell_size / 2
+            for latitude_cell in (latitude - shift_size,
+                                  latitude, latitude + shift_size):
+                for longitude_cell in (longitude - shift_size,
+                                       longitude, longitude + shift_size):
+                    yield (int(latitude_cell / self.cell_size),
+                           int(longitude_cell / self.cell_size))
 
     def add_location(self, location):
         if not location.latitude and location.longitude:

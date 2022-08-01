@@ -60,8 +60,10 @@ class Location(object):
             self.id = int(self.id)
         if isinstance(self.parent_id, str) and  len(self.parent_id)!= 0:
             self.parent_id = int(self.parent_id)
-        self.latitude = float(self.latitude)
-        self.longitude = float(self.longitude)
+        if isinstance(self.latitude, str) and  len(self.latitude)!= 0:
+            self.latitude = float(self.latitude)
+        if isinstance(self.longitude, str) and  len(self.longitude)!= 0:
+            self.longitude = float(self.longitude)
 
     def __repr__(self):
         attrs = []
